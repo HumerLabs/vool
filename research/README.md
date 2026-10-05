@@ -1,0 +1,91 @@
+# Research systems
+
+> **Experimental research. Not part of the standard VOOL production runtime.
+> Not enabled by normal production startup. Security assumptions, APIs and
+> architecture may change or be discarded.**
+
+This directory documents VOOL's research/production boundary. The research
+systems remain in their original locations to preserve imports and shared
+dependencies. The production activation boundary is a **runtime gate**,
+enforced at the production entrypoints by `core/runtime_mode.py` and exercised by
+`tests/test_production_research_boundary.py`.
+
+Research source and service entrypoints remain in this repository; this page does
+not assert that packaging excludes them. See the [subsystem status map](../docs/REPOSITORY_SCOPE.md)
+for local orchestration, Web0 shared dependencies, retired integrations and migration
+compatibility. Research classification means outside normal product networking,
+not abandoned code or permission to ignore security findings.
+
+## What is research
+
+| System | Where it lives | What it does |
+|---|---|---|
+| Mesh daemon (UDP/TCP transport) | `core/agent_runtime/daemon.py`, `core/daemon/`, `network/transport.py`, `apps/vool_node.py` | Peer-to-peer UDP 49152 / TCP 49153 mesh with envelopes, presence, knowledge shards and remote tasks |
+| Public hive presence bridge | `core/public_hive/`, `core/public_hive_bridge.py` | Presence heartbeats, commons updates and topic writes to configured hive seeds (`meet-*.parad0xlabs.com` clusters) |
+| Meet-and-greet swarm | `apps/meet_and_greet_node.py`, `apps/meet_and_greet_server.py`, `core/meet_and_greet_*.py` | F2F swarm joining, seed clusters, global topology |
+| Brain Hive watch | `apps/brain_hive_watch_server.py` | Watch server over the hive |
+| Autonomous peer work ("hive tasks") | `core/daemon/tasks.py`, `sandbox/helper_worker.py`, `core/daemon/mesh.py` | Executes TASK_ASSIGN capsules from remote peers (trust/capability-token guarded) |
+| Idle commons / autonomous research | `core/agent_runtime/presence.py`, `core/curiosity_roamer.py` | Idle-time hive posts under the user identity; pulls the public research queue |
+| Swarm query shards | `retrieval/swarm_query.py`, `core/shard_synthesizer.py`, `core/daemon/messages.py` | Broadcasts QUERY_SHARD to peers; serves learned summaries back |
+| DHT / WAN peer discovery | `network/dht.py`, `core/discovery_index.py`, `core/maintenance.py` | Experimental peer lookup and discovery support; retained with transport dependencies |
+| Hive dashboard and meet service views | `core/brain_hive_dashboard.py`, `core/dashboard/`, `apps/meet_and_greet_server.py` | Research/service inspection UI, separate from local chat |
+
+## The boundary
+
+Normal production startup does not enable peer research. The covered production
+entrypoints consult `core/runtime_mode.py`:
+
+- the API runtime does not boot the mesh daemon (no UDP 49152 / TCP 49153
+  listener, no STUN public-endpoint probe);
+- the agent starts no presence heartbeat, no idle-commons loop, no autonomous
+  hive-research thread, and performs no startup presence sync;
+- turns never broadcast swarm QUERY_SHARDs;
+- a port bind conflict never kills the holding process — production falls back
+  to an ephemeral port;
+- the public-hive bridge is never invoked by the agent.
+
+## Explicit research invocation
+
+```bash
+VOOL_RESEARCH_NETWORKING=1 python -m apps.vool_daemon          # mesh daemon CLI
+VOOL_RESEARCH_NETWORKING=1 python -m apps.meet_and_greet_node  # swarm node
+VOOL_RESEARCH_NETWORKING=1 python -m apps.brain_hive_watch_server
+```
+
+The variable is an environment opt-in only. It is deliberately **not** a
+preference, config-file key or product-edition flag, so it cannot be switched
+on accidentally through normal user settings. The research runners above set
+it themselves when invoked through their own tooling.
+
+Tests exercise the research systems directly (constructing daemons and
+transports against loopback ports inside the test tree); that is a research
+invocation of the library code and does not affect shipped builds.
+
+## Verification
+
+`tests/test_production_research_boundary.py` proves, for a default
+production boot: no mesh listener on UDP 49152 or TCP 49153, no presence
+heartbeat threads, no swarm dispatch, no stale-port kills, no STUN probe —
+including a live subprocess boot of the real API server.
+
+## External data-flow audit (security review §9)
+
+Every pathway by which user input can leave the machine, categorized:
+
+| Pathway | Category | Status |
+|---|---|---|
+| Chat turn to a selected/pinned cloud model (BYOK) | A. explicit model/provider request | Shipped; requires the user's own key and an explicit lane choice |
+| User-requested web search / research / fetch / page render | B. explicit user-requested web call | Shipped; queries derived from the request, receipted, rate-fenced |
+| Web fetch inside tool loop answering the user's ask | B. explicit user-requested web call | Shipped (current-information requirement gates it) |
+| Swarm QUERY_SHARD broadcast on weak retrieval | D. research-only networking | Removed from production reachability (runtime_mode gate) |
+| Mesh knowledge summaries answering peer queries | D. research-only networking | Same; plus share_scope now enforced on the candidate listing too |
+| Public-hive presence heartbeat (every 120 s) | D. research-only networking | Removed from production (no threads, no startup sync) |
+| Idle commons / autonomous hive research (web searches + posting under the user's identity) | D. research-only networking | Removed from production |
+| Hive task execution for remote peers (searches from the user's IP) | D. research-only networking | Removed from production (daemon never boots) |
+| STUN public-endpoint probe at transport start | D. research-only networking | Removed from production |
+| Request fragments to mesh peers, word for word | E. claimed unintended leakage | NOT VERIFIED: QUERY_SHARD carries a SHA-256 problem signature, never raw text |
+| "First words of messages to public search engines" | E. claimed unintended leakage | NOT VERIFIED as a distinct path: search queries are derived from the request the user asked to research; no prefix-truncation egress exists |
+
+Category E contains no verified finding in this recorded audit. Category D is
+excluded from normal production activation by the research boundary. Explicit
+research invocations and direct service use require their own security review.

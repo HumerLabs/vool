@@ -1,0 +1,977 @@
+from __future__ import annotations
+
+import ast
+import json
+import re
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+
+
+def _setuptools_include_patterns() -> list[str]:
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    match = re.search(r"\[tool\.setuptools\.packages\.find\]\s+include = \[(.*?)\]", pyproject, re.S)
+    assert match is not None, "setuptools package discovery include list missing from pyproject.toml"
+    return ast.literal_eval(f"[{match.group(1)}]")
+
+
+def test_pyproject_package_discovery_lists_runtime_package_roots() -> None:
+    include = set(_setuptools_include_patterns())
+    model_registry = (REPO_ROOT / "core" / "model_registry.py").read_text(encoding="utf-8")
+    tool_executor = (REPO_ROOT / "core" / "tool_intent_executor.py").read_text(encoding="utf-8")
+    channel_actions = (REPO_ROOT / "core" / "channel_actions.py").read_text(encoding="utf-8")
+    onboarding = (REPO_ROOT / "core" / "onboarding.py").read_text(encoding="utf-8")
+
+    assert "adapters*" in include
+    assert "tools*" in include
+    assert "relay*" in include
+    assert "installer*" in include
+    assert (REPO_ROOT / "adapters" / "__init__.py").exists()
+    assert (REPO_ROOT / "tools" / "__init__.py").exists()
+    assert (REPO_ROOT / "relay" / "__init__.py").exists()
+    assert (REPO_ROOT / "relay" / "bridge_workers" / "__init__.py").exists()
+    assert (REPO_ROOT / "installer" / "__init__.py").exists()
+    assert "from adapters." in model_registry
+    assert "from tools.registry" in tool_executor
+    assert "from relay." in channel_actions
+    assert "from installer.register_openclaw_agent import register" not in onboarding
+    assert "openclaw" not in onboarding.lower().replace("openclaw_registration", "")
+
+
+def test_pyproject_runtime_extra_covers_installer_runtime_surface() -> None:
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+
+    for marker in (
+        "runtime = [",
+        '"openai>=1.0"',
+        '"anthropic>=0.18"',
+        '"sentence-transformers>=2.2"',
+        '"torch>=2.13.0"',
+        '"transformers>=4.48"',
+        '"playwright>=1.52,<2.0"',
+        '"zstandard>=0.22.0"',
+        '"xxhash>=3.4.0"',
+    ):
+        assert marker in pyproject
+
+
+def test_pyproject_dev_extra_covers_build_and_test_tooling() -> None:
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    # Pinned, not floored. `[tool.ruff.lint] select` lists rule FAMILIES, so a floor like
+    # ">=0.3" lets a new ruff enrol rules nobody opted into and turn main red with no code
+    # change. The pin's VERSION lives only in pyproject -- the CI lint job and the
+    # verification gate read it from there, so a bump lands in one place; the shape below
+    # asserts it stays an exact pin.
+    ruff_pin = re.search(r'"ruff==[0-9][0-9A-Za-z.\-]*"', pyproject)
+    assert ruff_pin is not None, "ruff must stay exactly pinned in the dev extra, not floored"
+
+    for marker in (
+        "dev = [",
+        '"build>=1.2"',
+        '"pytest>=7.0"',
+        ruff_pin.group(0),
+        '"mypy>=1.8"',
+        # tests/test_daemon_survives_concurrent_load.py imports httpx. It was never declared, so it
+        # passed on machines that happened to have it and died in CI with ModuleNotFoundError on
+        # every run. A test dependency that only exists on someone's laptop is not declared.
+        '"httpx>=0.27"',
+    ):
+        assert marker in pyproject
+
+
+def test_container_and_docs_share_api_healthz_contract() -> None:
+    dockerfile = (REPO_ROOT / "Dockerfile").read_text(encoding="utf-8")
+    install_doc = (REPO_ROOT / "docs" / "INSTALL.md").read_text(encoding="utf-8")
+    control_plane_doc = (REPO_ROOT / "docs" / "CONTROL_PLANE.md").read_text(encoding="utf-8")
+    api_server = (REPO_ROOT / "apps" / "vool_api_server.py").read_text(encoding="utf-8")
+    api_service = (REPO_ROOT / "core" / "web" / "api" / "service.py").read_text(encoding="utf-8")
+
+    assert "http://localhost:11435/healthz" in dockerfile
+    assert "http://127.0.0.1:11435/healthz" in install_doc
+    assert "GET /healthz" in control_plane_doc
+    assert "create_api_app" in api_server
+    assert '"/healthz"' in api_service
+    assert '"/v1/healthz"' in api_service
+
+
+def test_installers_use_module_entrypoints_and_runtime_extra_without_pythonpath_hacks() -> None:
+    sh_installer = (REPO_ROOT / "installer" / "install_vool.sh").read_text(encoding="utf-8")
+    bat_installer = (REPO_ROOT / "installer" / "install_vool.bat").read_text(encoding="utf-8")
+
+    assert 'pip install "${PROJECT_ROOT}[runtime,proof]"' in sh_installer
+    assert 'pip install "%PROJECT_ROOT%[runtime,proof]"' in bat_installer
+    assert "-m storage.migrations" in sh_installer
+    assert "-m storage.migrations" in bat_installer
+    assert "-m ops.ensure_public_hive_auth" in sh_installer
+    assert "-m ops.ensure_public_hive_auth" in bat_installer
+    assert "PYTHONPATH" not in sh_installer
+    assert "PYTHONPATH" not in bat_installer
+    assert "ops/ensure_public_hive_auth.py" not in sh_installer
+    assert "ops\\ensure_public_hive_auth.py" not in bat_installer
+    assert (REPO_ROOT / "ops" / "ensure_public_hive_auth.py").exists()
+
+
+def test_install_doc_exposes_explicit_public_hive_auth_hydration_step() -> None:
+    install_doc = (REPO_ROOT / "docs" / "INSTALL.md").read_text(encoding="utf-8")
+
+    assert "python -m ops.ensure_public_hive_auth" in install_doc
+    assert "VOOL_PUBLIC_HIVE_WATCH_HOST" in install_doc
+    assert "VOOL_PUBLIC_HIVE_REMOTE_CONFIG" in install_doc
+
+
+def test_do_ip_first_cluster_pack_is_shipped_with_direct_ip_runtime_defaults() -> None:
+    cluster_root = REPO_ROOT / "config" / "meet_clusters" / "do_ip_first_4node"
+    assert (cluster_root / "README.md").exists()
+    assert (cluster_root / "cluster_manifest.json").exists()
+    assert (cluster_root / "watch-edge-1.json").exists()
+
+    agent_bootstrap = json.loads((cluster_root / "agent-bootstrap.sample.json").read_text(encoding="utf-8"))
+    watch_edge = json.loads((cluster_root / "watch-edge-1.json").read_text(encoding="utf-8"))
+
+    assert agent_bootstrap["meet_seed_urls"] == [
+        "https://203.0.113.11:8766",
+        "https://203.0.113.12:8766",
+        "https://203.0.113.13:8766",
+    ]
+    assert agent_bootstrap["tls_insecure_skip_verify"] is True
+    assert watch_edge["public_url"] == "https://203.0.113.14:8788"
+    assert watch_edge["upstream_base_urls"] == [
+        "https://203.0.113.11:8766",
+        "https://203.0.113.12:8766",
+        "https://203.0.113.13:8766",
+    ]
+    assert watch_edge["tls_insecure_skip_verify"] is True
+    assert not str(watch_edge.get("auth_token") or "").strip()
+
+
+def test_installers_derive_profile_truth_from_runtime_provider_snapshot() -> None:
+    sh_installer = (REPO_ROOT / "installer" / "install_vool.sh").read_text(encoding="utf-8")
+    bat_installer = (REPO_ROOT / "installer" / "install_vool.bat").read_text(encoding="utf-8")
+
+    assert "from core.runtime_backbone import build_provider_registry_snapshot" in sh_installer
+    assert "provider_capability_truth=snapshot.capability_truth" in sh_installer
+    assert "from core.runtime_backbone import build_provider_registry_snapshot" in bat_installer
+    assert "provider_capability_truth=snapshot.capability_truth" in bat_installer
+
+
+def test_bootstrap_scripts_support_checksum_verification_and_docs_do_not_pipe_remote_scripts() -> None:
+    sh_bootstrap = (REPO_ROOT / "installer" / "bootstrap_vool.sh").read_text(encoding="utf-8")
+    ps_bootstrap = (REPO_ROOT / "installer" / "bootstrap_vool.ps1").read_text(encoding="utf-8")
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    install_doc = (REPO_ROOT / "docs" / "INSTALL.md").read_text(encoding="utf-8")
+
+    assert "--sha256" in sh_bootstrap
+    assert "VOOL_ARCHIVE_SHA256" in sh_bootstrap
+    assert "sha256sum" in sh_bootstrap or "shasum" in sh_bootstrap
+    assert "Archive checksum verified." in sh_bootstrap
+
+    assert "ArchiveSha256" in ps_bootstrap
+    assert "VOOL_ARCHIVE_SHA256" in ps_bootstrap
+    assert "Get-FileHash -Algorithm SHA256" in ps_bootstrap
+    assert "Archive checksum verified." in ps_bootstrap
+
+    assert "| bash" not in readme
+    assert "| iex" not in readme
+    assert "| bash" not in install_doc
+    assert "| iex" not in install_doc
+    assert "curl -fsSLo bootstrap_vool.sh" in readme
+    assert "Invoke-WebRequest https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1" in readme
+    assert "curl -fsSLo bootstrap_vool.sh" in install_doc
+    assert "Invoke-WebRequest https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1" in install_doc
+
+
+def test_install_profile_selection_is_available_across_bootstrap_and_installer_surfaces() -> None:
+    sh_installer = (REPO_ROOT / "installer" / "install_vool.sh").read_text(encoding="utf-8")
+    bat_installer = (REPO_ROOT / "installer" / "install_vool.bat").read_text(encoding="utf-8")
+    sh_bootstrap = (REPO_ROOT / "installer" / "bootstrap_vool.sh").read_text(encoding="utf-8")
+    ps_bootstrap = (REPO_ROOT / "installer" / "bootstrap_vool.ps1").read_text(encoding="utf-8")
+    ps_launcher = (REPO_ROOT / "Install_And_Run_VOOL.ps1").read_text(encoding="utf-8")
+    ps_one_click = (REPO_ROOT / "installer" / "windows_one_click.ps1").read_text(encoding="utf-8")
+    ps_package = (REPO_ROOT / "installer" / "build_windows_package.ps1").read_text(encoding="utf-8")
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    install_doc = (REPO_ROOT / "docs" / "INSTALL.md").read_text(encoding="utf-8")
+
+    assert "--install-profile <profile>" in sh_installer
+    assert "/INSTALLPROFILE=ID" in bat_installer
+    assert "--install-profile <id>" in sh_bootstrap
+    assert '-InstallProfile local-max' in install_doc
+    assert '/INSTALLPROFILE=$InstallProfile' in ps_bootstrap
+    assert "Install_And_Run_VOOL.ps1" in ps_bootstrap
+    assert "-AutoYes" in ps_bootstrap
+    assert "installer\\windows_one_click.ps1" in ps_launcher
+    assert '$forward["SkipBenchmark"] = $true' in ps_launcher
+    assert "System.Windows.Forms" in ps_one_click
+    assert "Probe PC" in ps_one_click
+    assert "Run live local model check after install" in ps_one_click
+    assert "--benchmark --benchmark-timeout 240" in ps_one_click
+    assert "$SkipBenchmark" in ps_one_click
+    assert "$env:VOOL_INSTALL_PROFILE = $batchProfile" in ps_one_click
+    assert "$env:VOOL_HEADLESS = \"1\"" in ps_one_click
+    assert "$env:VOOL_HOME = $VoolHome" in ps_one_click
+    assert "Set-AuthenticodeSignature" in ps_package
+    assert "VOOL_WINDOWS_SIGNING_CERT_THUMBPRINT" in ps_package
+    assert "Get-FileHash -Algorithm SHA256" in ps_package
+    assert "schema = \"vool.windows_package.v1\"" in ps_package
+    assert 'Get-GitLines @("ls-files")' in ps_package
+    assert "Staged Windows package is missing Install_And_Run_VOOL.ps1" in ps_package
+    assert "refusing to create an incomplete package" in ps_package
+    assert "powershell -ExecutionPolicy Bypass -File .\\Install_And_Run_VOOL.ps1" in install_doc
+    assert "installer\\build_windows_package.ps1" in install_doc
+    assert "install-profile --set ollama-only" in sh_installer
+    assert "install-profile --set ollama-max" in sh_installer
+    assert "install-profile --set local-max" in readme
+    assert "--install-profile local-only" in readme
+    assert "install-profile --set ollama-only" in install_doc
+    assert "install-profile --set ollama-max" in install_doc
+    assert "ollama-only" in sh_bootstrap
+    assert "ollama-max" in sh_bootstrap
+    assert "detect_install_profile_display" in sh_installer
+    assert "Recommended profile: ${recommended_install_profile_display}" in sh_installer
+    assert "Install profile: ${install_profile_display}" in sh_installer
+    assert "from core.install_recommendations import build_install_recommendation_truth" in bat_installer
+    assert "from core.model_store_planner import DEFAULT_OPENCLAW_MEMORY_MODEL, build_model_store_drive_plan" in bat_installer
+    assert "Recommended Ollama model store: %OLLAMA_MODELS_DIR%" in bat_installer
+    assert "RECOMMENDED_BUNDLE_MODELS" in bat_installer
+    assert "set \"MODELS_TO_PULL_LIST=%MODELS_TO_PULL:,= %\"" in bat_installer
+    assert "for %%M in (%MODELS_TO_PULL_LIST%) do" in bat_installer
+    # local_plus_llamacpp is a provider stack_id, not a valid --install-profile value; the
+    # README must not advertise it as one (the real public profiles are auto-recommended /
+    # local-only / local-max). A first-class llama.cpp install profile is separate future work.
+    assert "local_plus_llamacpp" not in readme
+    assert "first-class installer/runtime lane yet" not in readme
+
+
+def test_windows_retired_openclaw_launcher_is_a_side_effect_free_stub() -> None:
+    launcher = (REPO_ROOT / "OpenClaw_VOOL.bat").read_text(encoding="utf-8")
+    runtime = (REPO_ROOT / "core" / "web" / "api" / "runtime.py").read_text(encoding="utf-8")
+    start_launcher_native = (REPO_ROOT / "Start_VOOL.bat").read_text(encoding="utf-8")
+
+    # The stub refuses honestly and points at native startup + the separate skills repo.
+    assert "retired from VOOL" in launcher
+    assert "Start_VOOL.bat" in launcher
+    assert "Open_Chat.bat" in launcher
+    assert "Talk_To_VOOL.bat" in launcher
+    assert "Open_Web0.bat" in launcher
+    assert "https://github.com/Parad0x-Labs/openclaw-skills" in launcher
+    assert "exit /b 1" in launcher
+    # No third-party discovery, registration, UI patching, or gateway startup remains.
+    assert "where openclaw" not in launcher
+    assert "register_openclaw_agent.py" not in launcher
+    assert "inject_openclaw_web0_pill.py" not in launcher
+    assert "patch_openclaw_session_retry.py" not in launcher
+    assert "openclaw_locator" not in launcher
+    assert "18789" not in launcher
+    assert "schtasks" not in launcher
+    # The native receipt-model resolution the retired launcher used to carry still holds
+    # on the native start path (receipt model honored unless explicitly overridden).
+    assert 'if not "!RECEIPT_MODEL!"=="" if not "%VOOL_ALLOW_MODEL_ENV_OVERRIDE%"=="1" set "VOOL_OLLAMA_MODEL=!RECEIPT_MODEL!"' in start_launcher_native
+    assert 'if "%VOOL_OLLAMA_MODEL%"=="" if not "!RECEIPT_MODEL!"=="" set "VOOL_OLLAMA_MODEL=!RECEIPT_MODEL!"' in start_launcher_native
+    assert 'set "VOOL_REGISTER_INSTALLED_OLLAMA_MODELS=1"' in start_launcher_native
+    assert 'for %%I in ("%SCRIPT_DIR%.") do set "SCRIPT_ROOT=%%~fI"' in start_launcher_native
+    background_cmd = (REPO_ROOT / "vool_background.cmd").read_text(encoding="utf-8")
+    assert "goto run" in background_cmd
+    assert "http://127.0.0.1:11435/healthz" in background_cmd
+    assert 'for %%I in ("%SCRIPT_DIR%.") do set "SCRIPT_ROOT=%%~fI"' in background_cmd
+    assert '--cwd "%SCRIPT_ROOT%"' in background_cmd
+    assert "installer\\start_windows_detached.py" in background_cmd
+    assert "VOOL API detached start requested" in background_cmd
+    assert "vool_api_child.log" in background_cmd
+    assert "vool_api_child.err.log" in background_cmd
+    assert "call \"%SCRIPT_DIR%Start_VOOL.bat\"" not in background_cmd
+    assert "BeginConnect('127.0.0.1', 11435" in background_cmd
+    assert 'start "VOOL API" /MIN' not in background_cmd
+    background_vbs = (REPO_ROOT / "vool_background.vbs").read_text(encoding="utf-8")
+    assert "\\vool_background.cmd" in background_vbs
+    assert "\\Start_VOOL.bat" not in background_vbs
+    start_launcher = (REPO_ROOT / "Start_VOOL.bat").read_text(encoding="utf-8")
+    assert 'set "VOOL_REGISTER_INSTALLED_OLLAMA_MODELS=1"' in start_launcher
+    install_bat = (REPO_ROOT / "installer" / "install_vool.bat").read_text(encoding="utf-8")
+    assert 'setx VOOL_REGISTER_INSTALLED_OLLAMA_MODELS "1"' in install_bat
+    assert "VOOL_ENABLE_WINDOWS_COMPUTE_MODE" in runtime
+    assert "Adaptive compute mode daemon disabled" in runtime
+    assert "VOOL_ENABLE_WINDOWS_MESH_DAEMON" in runtime
+    assert "Mesh daemon disabled" in runtime
+    assert "VOOL_OPENCLAW_GATEWAY_PORT" not in launcher
+
+
+def test_windows_stub_launcher_executes_as_refusal_from_path_with_spaces(tmp_path: Path) -> None:
+    """EXECUTED on a Windows host: the retired OpenClaw launcher must refuse (exit 1,
+    honest notice) with zero side effects on an unrelated third-party config, including
+    when invoked through cmd.exe from a project path that contains spaces.
+
+    On non-Windows platforms cmd.exe cannot execute a .bat, so this case is a plain
+    PENDING-PLATFORM skip -- never a local pass. DELIVERY runs it through the Windows
+    fresh-host gauntlet (Test_VOOL_Windows_Gauntlet.cmd), whose focused regression
+    selection includes this file.
+    """
+    import os
+    import shutil
+    import subprocess
+    import sys
+
+    if sys.platform != "win32":
+        import pytest
+
+        pytest.skip("cmd.exe batch execution requires a Windows host (Windows fresh-host gauntlet)")
+
+    run_dir = tmp_path / "Vool Space Project"
+    run_dir.mkdir()
+    shutil.copyfile(REPO_ROOT / "OpenClaw_VOOL.bat", run_dir / "OpenClaw_VOOL.bat")
+
+    fake_home = tmp_path / "isolated-home"
+    openclaw_dir = fake_home / ".openclaw"
+    openclaw_dir.mkdir(parents=True)
+    unrelated_config = openclaw_dir / "openclaw.json"
+    unrelated_before = '{"model": "unrelated", "reserveTokensFloor": 99000}'
+    unrelated_config.write_text(unrelated_before, encoding="utf-8")
+
+    completed = subprocess.run(
+        ["cmd.exe", "/d", "/c", str(run_dir / "OpenClaw_VOOL.bat")],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "USERPROFILE": str(fake_home)},
+        timeout=60,
+    )
+    combined = completed.stdout + completed.stderr
+    assert completed.returncode == 1, combined
+    assert "retired from VOOL" in combined
+    assert unrelated_config.read_text(encoding="utf-8") == unrelated_before, (
+        "the refusal stub must leave unrelated third-party config byte-for-byte intact"
+    )
+
+
+def test_open_chat_bat_opens_through_the_powershell_boundary() -> None:
+    """The chat launcher's whole external-command surface is one contract: powershell.
+
+    The browser open rides the same powershell boundary the health checks already use, so
+    the executed Windows cases below can isolate and record every external effect. On a
+    real machine Start-Process with a URL opens the default browser exactly like the old
+    `start ""` did. The open RESULT IS CHECKED: a failed browser open must report failure
+    honestly, never the old unconditional 'Chat opened'.
+    """
+    launcher = (REPO_ROOT / "Open_Chat.bat").read_text(encoding="utf-8")
+    assert 'powershell -NoProfile -Command "Start-Process \'%CHAT_URL%\'"' in launcher
+    assert 'start "" "%CHAT_URL%"' not in launcher
+    # The open failure is owned: exit non-zero with the honest error, no success echo.
+    assert "if %errorlevel% neq 0 (" in launcher
+    assert "echo ERROR: Could not open the chat page at %CHAT_URL%." in launcher
+    open_line = launcher.index('powershell -NoProfile -Command "Start-Process')
+    assert launcher.index("if %errorlevel% neq 0 (", open_line) > open_line, (
+        "the errorlevel check must follow the browser-open invocation"
+    )
+    # The health/startup contract is unchanged.
+    assert "schtasks /query /tn \"VOOL_Daemon\"" in launcher
+    assert "vool_background.vbs" in launcher
+    assert "http://127.0.0.1:11435/healthz" in launcher
+
+
+_WINDOWS_DOUBLE_PY = r'''
+import json, re, sys
+from pathlib import Path
+
+# Invocation contract -- used identically by the compiled Windows .exe doubles and every
+# direct (platform-independent) test caller:
+#   python cmd_double.py <kind> <doubles-directory> [command arguments...]
+# sys.argv[1] is the double kind, sys.argv[2] the doubles directory, sys.argv[3:] the
+# recorded command. (This helper previously read the directory from sys.argv[3] -- the
+# first command FLAG -- and joined sys.argv[2:], so every recorded call crashed
+# FileNotFoundError and the doubles directory leaked into the recorded args.)
+kind = sys.argv[1]
+base = Path(sys.argv[2])
+args = " ".join(sys.argv[3:])
+entry = {"kind": kind, "args": args}
+code = 0
+if kind == "powershell":
+    if "Invoke-WebRequest" in args:
+        mode = (base / "health-mode.txt").read_text(encoding="utf-8").strip()
+        if mode.startswith("flaky:"):
+            need = int(mode.split(":", 1)[1])
+            counter_file = base / "health-counter.txt"
+            calls = int(counter_file.read_text(encoding="utf-8") or 0) + 1 if counter_file.exists() else 1
+            counter_file.write_text(str(calls), encoding="utf-8")
+            code = 0 if calls > need else 1
+        else:
+            code = 0 if mode == "healthy" else 1
+        entry["health"] = bool(code == 0)
+    elif "Start-Sleep" in args:
+        entry["sleep"] = True
+    elif "Start-Process" in args:
+        match = re.search(r"Start-Process '([^']+)'", args)
+        url = match.group(1) if match else ""
+        open_mode_file = base / "open-mode.txt"
+        open_mode = open_mode_file.read_text(encoding="utf-8").strip() if open_mode_file.exists() else "ok"
+        if open_mode == "fail":
+            entry["open_failed"] = True
+            entry["attempted_url"] = url
+            code = 1
+        else:
+            entry["opened_url"] = url
+    else:
+        code = 2
+elif kind == "schtasks":
+    mode = (base / "schtasks-mode.txt").read_text(encoding="utf-8").strip()
+    code = 0 if mode == "ok" else 1
+    entry["subcommand"] = "/run" if "/run" in args else ("/query" if "/query" in args else "?")
+else:
+    code = 2
+with open(base / ("calls-" + kind + ".jsonl"), "a", encoding="utf-8") as fh:
+    fh.write(json.dumps(entry) + "\n")
+raise SystemExit(code)
+'''
+
+
+# The powershell/schtasks doubles must be REAL EXECUTABLES on Windows: Open_Chat.bat
+# invokes them directly (no CALL), and cmd.exe batch-to-batch invocation TRANSFERS control
+# (the parent never resumes), so a .cmd shim could never exercise the launcher's
+# errorlevel checks and subsequent branches. Each double is a tiny .exe trampoline compiled
+# with the in-box .NET Framework compiler that forwards the raw command line to the
+# recorded helper and propagates its exit code -- executable-equivalent child return/exit
+# semantics with no production command changed to accommodate the double.
+#
+# The FIXED prefix arguments (helper path, kind, doubles directory) are Windows
+# command-line QUOTED (QuoteArgument, the MSVCRT parsing rule). They routinely contain
+# spaces (pytest tmp dirs, "doubles with spaces"), and psi.Arguments is a raw command
+# line: bare concatenation let the child's parser split them at every space, so python
+# opened a nonexistent script path and EVERY arm degraded to "VOOL is not installed" --
+# healthy, startup and open-failure alike -- with the missing-install arm recording no
+# schtasks query at all (gauntlet job 109373985068). Escaping for the C# COMPILER
+# (_cs_string_literal) is a different layer and never quotes anything at runtime.
+_CS_TRAMPOLINE_TEMPLATE = r'''
+using System;
+using System.Diagnostics;
+using System.Runtime.InteropServices;
+
+static class DoubleShim {
+    [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+    static extern IntPtr GetCommandLineW();
+
+    static string TailAfterExecutable(string commandLine) {
+        int i = 0;
+        if (commandLine.Length > 0 && commandLine[0] == '"') {
+            i = commandLine.IndexOf('"', 1);
+            if (i < 0) {
+                return "";
+            }
+            i += 1;
+        } else {
+            while (i < commandLine.Length && commandLine[i] != ' ') {
+                i += 1;
+            }
+        }
+        while (i < commandLine.Length && commandLine[i] == ' ') {
+            i += 1;
+        }
+        return commandLine.Substring(i);
+    }
+
+    // Windows command-line argument quoting (the rule the child's MSVCRT argv parser
+    // applies): wrap in double quotes when the value has whitespace or a quote, double
+    // backslashes that precede a quote, and double a trailing run of backslashes so it
+    // cannot escape the closing quote. Plain values pass through unquoted.
+    static string QuoteArgument(string value) {
+        if (value.Length == 0) {
+            return "\"\"";
+        }
+        bool plain = true;
+        for (int i = 0; i < value.Length; i++) {
+            char c = value[i];
+            if (c == ' ' || c == '\t' || c == '"') {
+                plain = false;
+                break;
+            }
+        }
+        if (plain) {
+            return value;
+        }
+        System.Text.StringBuilder quoted = new System.Text.StringBuilder();
+        quoted.Append('"');
+        int backslashes = 0;
+        for (int i = 0; i < value.Length; i++) {
+            char c = value[i];
+            if (c == '\\') {
+                backslashes += 1;
+                continue;
+            }
+            if (c == '"') {
+                for (int b = 0; b < backslashes * 2 + 1; b++) {
+                    quoted.Append('\\');
+                }
+                backslashes = 0;
+                continue;
+            }
+            for (int b = 0; b < backslashes; b++) {
+                quoted.Append('\\');
+            }
+            backslashes = 0;
+            quoted.Append(c);
+        }
+        for (int b = 0; b < backslashes * 2; b++) {
+            quoted.Append('\\');
+        }
+        quoted.Append('"');
+        return quoted.ToString();
+    }
+
+    static int Main() {
+        string commandLine = Marshal.PtrToStringUni(GetCommandLineW());
+        string tail = commandLine == null ? "" : TailAfterExecutable(commandLine);
+        ProcessStartInfo psi = new ProcessStartInfo();
+        psi.FileName = __PYTHON__;
+        psi.Arguments = QuoteArgument(__DOUBLE_PY__) + " " + QuoteArgument(__KIND__) + " " + QuoteArgument(__DOUBLES__) + " " + tail;
+        psi.UseShellExecute = false;
+        psi.CreateNoWindow = true;
+        using (Process child = Process.Start(psi)) {
+            child.WaitForExit();
+            return child.ExitCode;
+        }
+    }
+}
+'''
+
+
+def _cs_string_literal(value: str) -> str:
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def _executable_double_source(python_exe: str, double_py: Path, kind: str, doubles: Path) -> str:
+    """The trampoline source: forwards the raw command tail after argv[0] to the recorded
+    helper under the documented convention
+    ``<python> <cmd_double.py> <kind> <doubles-directory> <command arguments...>``."""
+    return (
+        _CS_TRAMPOLINE_TEMPLATE.replace("__PYTHON__", _cs_string_literal(python_exe))
+        .replace("__DOUBLE_PY__", _cs_string_literal(str(double_py)))
+        .replace("__KIND__", _cs_string_literal(kind))
+        .replace("__DOUBLES__", _cs_string_literal(str(doubles)))
+    )
+
+
+def _csc_candidates() -> list:
+    import os
+    from pathlib import Path as _Path
+
+    windir = os.environ.get("SystemRoot", r"C:\Windows")
+    return [
+        _Path(windir) / "Microsoft.NET" / "Framework64" / "v4.0.30319" / "csc.exe",
+        _Path(windir) / "Microsoft.NET" / "Framework" / "v4.0.30319" / "csc.exe",
+    ]
+
+
+def _write_executable_doubles(doubles: Path) -> None:
+    """Compile powershell.exe/schtasks.exe trampolines into the isolated doubles directory
+    with the in-box .NET Framework compiler. Fails EXPLICITLY when no compiler exists --
+    never silently degrades to .cmd chaining or a vacuous pass."""
+    import shutil
+    import subprocess
+    import sys
+
+    import pytest
+
+    csc = next((c for c in _csc_candidates() if c.exists()), None)
+    if csc is None:
+        csc = shutil.which("csc.exe")
+    if csc is None:
+        pytest.fail(
+            "building the executable powershell/schtasks doubles requires the in-box .NET "
+            "Framework compiler (csc.exe under Microsoft.NET/Framework[64]/v4.0.30319 or on "
+            "PATH); none was found -- the Open_Chat.bat executed arms cannot run honestly"
+        )
+    double_py = doubles / "cmd_double.py"
+    for kind in ("powershell", "schtasks"):
+        source = doubles / f"shim-{kind}.cs"
+        source.write_text(
+            _executable_double_source(sys.executable, double_py, kind, doubles), encoding="utf-8"
+        )
+        exe = doubles / f"{kind}.exe"
+        compiled = subprocess.run(
+            [str(csc), "/nologo", "/target:exe", f"/out:{exe}", str(source)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if compiled.returncode != 0 or not exe.exists():
+            pytest.fail(
+                f"csc could not build the {kind} double "
+                f"(rc={compiled.returncode}): {compiled.stdout} {compiled.stderr}"
+            )
+
+
+def _smoke_executable_doubles(doubles: Path, *, clear_records: bool = True) -> None:
+    """DIRECT .exe invocation proof, run BEFORE any batch arm: compiler success is not
+    executable success. Each compiled double must launch the recorded helper across the
+    spaces-carrying fixed arguments (Windows command-line quoting at the psi.Arguments
+    boundary), record exactly the forwarded command with the doubles directory NOT leaked
+    into it, and PROPAGATE the helper's exit code in both directions. A failure here
+    names the trampoline, never the launcher under test.
+
+    With clear_records=True (the pre-arm prologue) the smoke's own rows are then removed
+    so every arm's evidence starts from its own batch traffic; the assertions above are
+    the retained proof that the smoke ran."""
+    import subprocess
+
+    def invoke(exe: str, *tail: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [str(doubles / exe), *tail],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+    health_tail = (
+        "-NoProfile",
+        "-Command",
+        "try { $null = Invoke-WebRequest -Uri 'http://127.0.0.1:11435/healthz'"
+        " -UseBasicParsing -TimeoutSec 2; exit 0 } catch { exit 1 }",
+    )
+
+    # powershell double: helper invoked, argv recorded, healthy exit 0 propagated.
+    result = invoke("powershell.exe", *health_tail)
+    assert result.returncode == 0, (
+        f"the compiled powershell double failed to invoke the helper across the "
+        f"spaces-carrying paths (unquoted-psi.Arguments regression): {result.stderr}"
+    )
+    entries = _calls(doubles, "powershell")
+    assert entries, "the powershell double must reach the recorded helper"
+    smoke_entry = entries[-1]
+    assert smoke_entry.get("health") is True
+    assert smoke_entry["args"].startswith("-NoProfile -Command"), smoke_entry["args"]
+    assert "doubles with spaces" not in smoke_entry["args"], (
+        "the doubles directory leaked into the recorded command arguments"
+    )
+
+    # ... and the failure direction: unhealthy health -> helper exit 1 propagated.
+    (doubles / "health-mode.txt").write_text("unhealthy", encoding="utf-8")
+    result = invoke("powershell.exe", *health_tail)
+    assert result.returncode == 1, (
+        f"the compiled powershell double did not propagate the helper's failure exit: "
+        f"{result.stdout} {result.stderr}"
+    )
+    assert _calls(doubles, "powershell")[-1].get("health") is False
+
+    # schtasks double: query recorded with the forwarded subcommand, exit 0; mode
+    # failure -> exit 1 propagated.
+    result = invoke("schtasks.exe", "/query", "/tn", "VOOL_Daemon")
+    assert result.returncode == 0, (
+        f"the compiled schtasks double failed to invoke the helper: {result.stderr}"
+    )
+    assert _calls(doubles, "schtasks")[-1].get("subcommand") == "/query"
+    (doubles / "schtasks-mode.txt").write_text("fail", encoding="utf-8")
+    result = invoke("schtasks.exe", "/query", "/tn", "VOOL_Daemon")
+    assert result.returncode == 1, (
+        f"the compiled schtasks double did not propagate the failure exit: {result.stderr}"
+    )
+
+    # Restore the fixture's neutral modes; optionally clear the smoke's rows so the
+    # batch arms' recorded evidence is exactly their own traffic.
+    (doubles / "health-mode.txt").write_text("healthy", encoding="utf-8")
+    (doubles / "schtasks-mode.txt").write_text("ok", encoding="utf-8")
+    if clear_records:
+        for kind in ("powershell", "schtasks"):
+            record = doubles / f"calls-{kind}.jsonl"
+            if record.exists():
+                record.unlink()
+
+
+def _open_chat_bat_fixture(tmp_path: Path) -> tuple[Path, Path, Path, str]:
+    """Isolated cmd.exe execution rig for the REAL Open_Chat.bat: a project directory with
+    spaces, an isolated USERPROFILE with a planted unrelated config, and recorded
+    powershell/schtasks doubles resolved ahead of the real executables through PATH. The
+    doubles are compiled .exe trampolines (executable-equivalent child return/exit
+    semantics; a .cmd shim would chain control away from the parent batch). No real
+    scheduled task, powershell, script host or browser is ever invoked."""
+    import os
+    import shutil
+    import sys
+
+    run_dir = tmp_path / "Vool Space Project"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(REPO_ROOT / "Open_Chat.bat", run_dir / "Open_Chat.bat")
+
+    doubles = tmp_path / "doubles with spaces"
+    doubles.mkdir(parents=True, exist_ok=True)
+    (doubles / "health-mode.txt").write_text("healthy", encoding="utf-8")
+    (doubles / "schtasks-mode.txt").write_text("ok", encoding="utf-8")
+    double_py = doubles / "cmd_double.py"
+    double_py.write_text(_WINDOWS_DOUBLE_PY, encoding="utf-8")
+    if sys.platform == "win32":
+        _write_executable_doubles(doubles)
+        # Direct .exe smoke BEFORE any batch arm: prove each compiled double actually
+        # invokes the helper (quoting across spaces), records correct argv, and
+        # propagates exits -- so no arm ever runs on top of a compiled-but-broken double.
+        _smoke_executable_doubles(doubles)
+
+    fake_home = tmp_path / "isolated-home"
+    openclaw_dir = fake_home / ".openclaw"
+    openclaw_dir.mkdir(parents=True)
+    unrelated_config = openclaw_dir / "openclaw.json"
+    unrelated_config.write_text('{"model": "unrelated", "reserveTokensFloor": 99000}', encoding="utf-8")
+
+    env = {
+        **os.environ,
+        "PATH": str(doubles) + os.pathsep + os.environ.get("PATH", ""),
+        "USERPROFILE": str(fake_home),
+    }
+    return run_dir, doubles, unrelated_config, env
+
+
+def _run_open_chat_bat(run_dir: Path, env: dict, timeout: int = 120):
+    import subprocess
+
+    return subprocess.run(
+        ["cmd.exe", "/d", "/c", str(run_dir / "Open_Chat.bat")],
+        capture_output=True,
+        text=True,
+        env=env,
+        timeout=timeout,
+    )
+
+
+def _win32_or_skip() -> None:
+    import sys
+
+    if sys.platform != "win32":
+        import pytest
+
+        pytest.skip("cmd.exe batch execution requires a Windows host (Windows fresh-host gauntlet)")
+
+
+def _calls(doubles: Path, kind: str) -> list[dict]:
+    import json
+
+    path = doubles / f"calls-{kind}.jsonl"
+    if not path.exists():
+        return []
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
+
+def test_windows_double_helper_records_and_exits_by_invocation_convention(tmp_path: Path) -> None:
+    """The recorded-double invocation contract, executed PLATFORM-INDEPENDENTLY.
+
+    The Windows executed arms resolve powershell/schtasks to compiled .exe doubles that
+    forward the raw command tail as
+    ``<python> <cmd_double.py> <kind> <doubles-directory> <command arguments...>`` --
+    the same convention every direct caller here uses. Both halves are provable on any
+    host: the helper's recording/exit behavior per mode, and the trampoline's forwarding
+    ORDER (helper path, kind, doubles directory, then the command tail). The argv-indexing
+    defect class -- the helper once read the doubles DIRECTORY from the first command
+    flag's slot and crashed FileNotFoundError before recording anything -- is therefore
+    caught locally, before any Windows run. Paths deliberately contain spaces.
+    """
+    import subprocess
+    import sys
+
+    doubles = tmp_path / "doubles with spaces"
+    doubles.mkdir()
+    (doubles / "health-mode.txt").write_text("healthy", encoding="utf-8")
+    (doubles / "schtasks-mode.txt").write_text("ok", encoding="utf-8")
+    double_py = doubles / "cmd_double.py"
+    double_py.write_text(_WINDOWS_DOUBLE_PY, encoding="utf-8")
+
+    def invoke(kind: str, *command: str) -> subprocess.CompletedProcess:
+        return subprocess.run(
+            [sys.executable, str(double_py), kind, str(doubles), *command],
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+
+    health_cmd = (
+        "-NoProfile",
+        "-Command",
+        "try { $null = Invoke-WebRequest -Uri 'http://127.0.0.1:11435/healthz'"
+        " -UseBasicParsing -TimeoutSec 2; exit 0 } catch { exit 1 }",
+    )
+
+    # health: healthy -> exit 0, recorded with ONLY the command arguments.
+    result = invoke("powershell", *health_cmd)
+    assert result.returncode == 0, result.stderr
+    [entry] = _calls(doubles, "powershell")
+    assert entry["health"] is True
+    assert entry["args"].startswith("-NoProfile -Command"), entry["args"]
+    assert "doubles with spaces" not in entry["args"], (
+        "the doubles directory must not leak into the recorded command arguments"
+    )
+
+    # health: unhealthy -> exit 1, health False.
+    (doubles / "health-mode.txt").write_text("unhealthy", encoding="utf-8")
+    result = invoke("powershell", *health_cmd)
+    assert result.returncode == 1, result.stderr
+    assert _calls(doubles, "powershell")[-1]["health"] is False
+
+    # health: flaky:2 -> first two calls fail, the third succeeds (counter across calls).
+    (doubles / "health-mode.txt").write_text("flaky:2", encoding="utf-8")
+    assert invoke("powershell", *health_cmd).returncode == 1
+    assert invoke("powershell", *health_cmd).returncode == 1
+    assert invoke("powershell", *health_cmd).returncode == 0
+    assert [e["health"] for e in _calls(doubles, "powershell")[-3:]] == [False, False, True]
+
+    # sleep -> recorded, exit 0.
+    result = invoke("powershell", "-NoProfile", "-Command", "Start-Sleep -Seconds 1")
+    assert result.returncode == 0, result.stderr
+    assert _calls(doubles, "powershell")[-1].get("sleep") is True
+
+    # browser open: success records the URL, exit 0.
+    result = invoke("powershell", "-NoProfile", "-Command", "Start-Process 'http://127.0.0.1:11435/chat'")
+    assert result.returncode == 0, result.stderr
+    assert _calls(doubles, "powershell")[-1].get("opened_url") == "http://127.0.0.1:11435/chat"
+
+    # browser open: failure mode refuses (exit 1) and never records an opened URL.
+    (doubles / "open-mode.txt").write_text("fail", encoding="utf-8")
+    result = invoke("powershell", "-NoProfile", "-Command", "Start-Process 'http://127.0.0.1:11435/chat'")
+    assert result.returncode == 1, result.stderr
+    failed = _calls(doubles, "powershell")[-1]
+    assert failed.get("open_failed") is True
+    assert "opened_url" not in failed
+
+    # schtasks: query and run recorded with per-mode exit codes.
+    assert invoke("schtasks", "/query", "/tn", "VOOL_Daemon").returncode == 0
+    assert invoke("schtasks", "/run", "/tn", "VOOL_Daemon").returncode == 0
+    assert [e["subcommand"] for e in _calls(doubles, "schtasks")] == ["/query", "/run"]
+    (doubles / "schtasks-mode.txt").write_text("fail", encoding="utf-8")
+    assert invoke("schtasks", "/query", "/tn", "VOOL_Daemon").returncode == 1
+
+    # an unknown kind must fail explicitly (exit 2), never silently succeed.
+    assert invoke("wscript", "x.vbs").returncode == 2
+
+    # The compiled Windows trampoline forwards the SAME convention: helper path, kind,
+    # doubles directory, then the forwarded raw command tail -- with every FIXED argument
+    # passing through Windows command-line quoting (the unquoted concatenation let the
+    # child's parser split the spaces-carrying helper path apart and every executed arm
+    # degraded to "VOOL is not installed"; gauntlet job 109373985068).
+    source = _executable_double_source(sys.executable, double_py, "powershell", doubles)
+    assert "__PYTHON__" not in source and "__KIND__" not in source
+    arguments_line = next(line for line in source.splitlines() if "psi.Arguments" in line)
+    helper_literal = _cs_string_literal(str(double_py))
+    kind_literal = _cs_string_literal("powershell")
+    doubles_literal = _cs_string_literal(str(doubles))
+    assert (
+        arguments_line.index(helper_literal)
+        < arguments_line.index(kind_literal)
+        < arguments_line.index(doubles_literal)
+        < arguments_line.rindex("tail")
+    ), "the trampoline must forward <double_py> <kind> <doubles> <tail> in that order"
+    assert arguments_line.count("QuoteArgument(") == 3, (
+        "every fixed argument must cross the psi.Arguments boundary through Windows "
+        "command-line quoting, not bare concatenation"
+    )
+
+
+def test_windows_double_exes_invoke_the_helper_and_propagate_exits(tmp_path: Path) -> None:
+    """DIRECT .exe smoke, EXECUTED on Windows BEFORE any batch arm: compiler success is
+    not executable success. Each compiled trampoline must launch the recorded helper
+    across spaces-carrying fixed arguments (Windows quoting at the psi.Arguments
+    boundary), record the forwarded command with the doubles directory not leaked into
+    it, and propagate the helper's exit code in BOTH directions. This is the gate the
+    gauntlet's five Open_Chat.bat arms now also run internally before every batch."""
+    _win32_or_skip()
+    doubles = tmp_path / "doubles with spaces"
+    doubles.mkdir(parents=True)
+    (doubles / "health-mode.txt").write_text("healthy", encoding="utf-8")
+    (doubles / "schtasks-mode.txt").write_text("ok", encoding="utf-8")
+    (doubles / "cmd_double.py").write_text(_WINDOWS_DOUBLE_PY, encoding="utf-8")
+    _write_executable_doubles(doubles)
+    _smoke_executable_doubles(doubles, clear_records=False)
+
+
+def test_open_chat_bat_executed_healthy_opens_chat_without_starting_anything(tmp_path: Path) -> None:
+    """EXECUTED on Windows: an already-healthy runtime opens the chat page through the
+    powershell boundary with zero schtasks/startup activity, from a path with spaces,
+    leaving unrelated third-party config byte-for-byte intact."""
+    _win32_or_skip()
+    run_dir, doubles, config, env = _open_chat_bat_fixture(tmp_path)
+    (doubles / "health-mode.txt").write_text("healthy", encoding="utf-8")
+
+    result = _run_open_chat_bat(run_dir, env)
+    combined = result.stdout + result.stderr
+    assert result.returncode == 0, combined
+    assert "Chat opened at http://127.0.0.1:11435/chat" in combined
+    ps = _calls(doubles, "powershell")
+    assert ps and ps[0].get("health") is True, "the healthy arm must check health first"
+    assert any(entry.get("opened_url") == "http://127.0.0.1:11435/chat" for entry in ps)
+    assert _calls(doubles, "schtasks") == [], "a healthy runtime must not be restarted"
+    assert config.read_text(encoding="utf-8") == '{"model": "unrelated", "reserveTokensFloor": 99000}'
+
+
+def test_open_chat_bat_executed_missing_installation_refuses_honestly(tmp_path: Path) -> None:
+    """EXECUTED on Windows: health down, no scheduled task, no background launcher in the
+    project directory -> the honest not-installed refusal, exit 1, nothing opened."""
+    _win32_or_skip()
+    run_dir, doubles, config, env = _open_chat_bat_fixture(tmp_path)
+    (doubles / "health-mode.txt").write_text("unhealthy", encoding="utf-8")
+    (doubles / "schtasks-mode.txt").write_text("fail", encoding="utf-8")
+
+    result = _run_open_chat_bat(run_dir, env)
+    combined = result.stdout + result.stderr
+    assert result.returncode == 1, combined
+    assert "ERROR: VOOL is not installed yet. Run installer\\install_vool.bat first." in combined
+    tasks = _calls(doubles, "schtasks")
+    assert [e.get("subcommand") for e in tasks] == ["/query"], "a missing task must not be run"
+    assert not any("opened_url" in e for e in _calls(doubles, "powershell"))
+    assert config.read_text(encoding="utf-8") == '{"model": "unrelated", "reserveTokensFloor": 99000}'
+
+
+def test_open_chat_bat_executed_startup_success_opens_after_becoming_healthy(tmp_path: Path) -> None:
+    """EXECUTED on Windows: health down, the scheduled task runs, health becomes healthy
+    during the poll -> chat opened, exit 0."""
+    _win32_or_skip()
+    run_dir, doubles, config, env = _open_chat_bat_fixture(tmp_path)
+    (doubles / "health-mode.txt").write_text("flaky:2", encoding="utf-8")
+    (doubles / "schtasks-mode.txt").write_text("ok", encoding="utf-8")
+
+    result = _run_open_chat_bat(run_dir, env)
+    combined = result.stdout + result.stderr
+    assert result.returncode == 0, combined
+    assert "Starting VOOL..." in combined
+    assert "Chat opened at http://127.0.0.1:11435/chat" in combined
+    assert [e.get("subcommand") for e in _calls(doubles, "schtasks")] == ["/query", "/run"]
+    health_sequence = [e["health"] for e in _calls(doubles, "powershell") if "health" in e]
+    assert health_sequence[:1] == [False], "startup begins from an unhealthy port"
+    assert health_sequence[-1] is True
+    assert config.read_text(encoding="utf-8") == '{"model": "unrelated", "reserveTokensFloor": 99000}'
+
+
+def test_open_chat_bat_executed_startup_failure_reports_bounded_error(tmp_path: Path) -> None:
+    """EXECUTED on Windows: the task runs but health never becomes healthy -> the bounded
+    poll exhausts (120 iterations against the instant doubles), the honest error, exit 1,
+    and nothing is opened."""
+    _win32_or_skip()
+    run_dir, doubles, config, env = _open_chat_bat_fixture(tmp_path)
+    (doubles / "health-mode.txt").write_text("unhealthy", encoding="utf-8")
+    (doubles / "schtasks-mode.txt").write_text("ok", encoding="utf-8")
+
+    # The bounded poll spawns 240 double processes (sleep + health per iteration); give the
+    # slowest gauntlet host headroom without touching the launcher's own bounds.
+    result = _run_open_chat_bat(run_dir, env, timeout=300)
+    combined = result.stdout + result.stderr
+    assert result.returncode == 1, combined
+    assert "ERROR: VOOL API did not become healthy on http://127.0.0.1:11435/healthz." in combined
+    ps = _calls(doubles, "powershell")
+    health_calls = [e for e in ps if "health" in e]
+    assert len(health_calls) == 1 + 120, "the initial check plus the full bounded poll"
+    sleeps = [e for e in ps if e.get("sleep")]
+    assert len(sleeps) == 120
+    assert not any("opened_url" in e for e in ps)
+    assert config.read_text(encoding="utf-8") == '{"model": "unrelated", "reserveTokensFloor": 99000}'
+
+
+def test_open_chat_bat_executed_browser_open_failure_reports_honestly(tmp_path: Path) -> None:
+    """EXECUTED on Windows: the runtime is healthy and reused, but the browser open itself
+    FAILS -> the launcher reports the failure honestly (exit 1, the error line, no success
+    echo) instead of the old unconditional 'Chat opened', with zero startup activity and
+    the unrelated third-party config byte-for-byte intact. This is the open-failure twin of
+    the healthy arm: reuse still happens first, only the open result changed."""
+    _win32_or_skip()
+    run_dir, doubles, config, env = _open_chat_bat_fixture(tmp_path)
+    (doubles / "health-mode.txt").write_text("healthy", encoding="utf-8")
+    (doubles / "open-mode.txt").write_text("fail", encoding="utf-8")
+
+    result = _run_open_chat_bat(run_dir, env)
+    combined = result.stdout + result.stderr
+    assert result.returncode == 1, combined
+    assert "ERROR: Could not open the chat page at http://127.0.0.1:11435/chat." in combined
+    assert "Chat opened at" not in combined
+    ps = _calls(doubles, "powershell")
+    assert ps and ps[0].get("health") is True, "a healthy runtime is still reused first"
+    assert any(e.get("open_failed") for e in ps), "the open attempt must be recorded"
+    assert not any("opened_url" in e for e in ps)
+    assert _calls(doubles, "schtasks") == [], "an open failure must not start anything"
+    assert config.read_text(encoding="utf-8") == '{"model": "unrelated", "reserveTokensFloor": 99000}'
