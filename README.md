@@ -7,7 +7,6 @@
 <p align="center"><strong>Your machine. Your models. An agent that gets things done.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/HumerLabs/vool/actions/workflows/ci.yml"><img src="https://github.com/HumerLabs/vool/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-eee8d5" alt="MIT license" /></a>
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/version-0.6.0_beta-eee8d5" alt="Version 0.6.0 beta" /></a>
 </p>
