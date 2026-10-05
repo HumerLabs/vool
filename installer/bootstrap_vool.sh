@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-OWNER="${VOOL_GITHUB_OWNER:-Parad0x-Labs}"
+OWNER="${VOOL_GITHUB_OWNER:-HumerLabs}"
 REPO="${VOOL_GITHUB_REPO:-vool}"
 REF="${VOOL_GITHUB_REF:-main}"
 # NULLA -> VOOL compatibility: reuse a pre-rename install directory instead of creating a second one.

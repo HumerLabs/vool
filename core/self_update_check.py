@@ -19,7 +19,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any
 
-DEFAULT_OWNER = "Parad0x-Labs"
+DEFAULT_OWNER = "HumerLabs"
 DEFAULT_REPO = "vool-local"
 CHECK_INTERVAL_SECONDS = 24 * 60 * 60  # once per 24h
 

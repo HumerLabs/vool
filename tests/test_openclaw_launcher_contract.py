@@ -56,7 +56,7 @@ def test_generated_stub_refuses_nonzero_without_side_effects(tmp_path: Path) -> 
     assert "Start_VOOL.sh" in combined
     assert "Talk_To_VOOL.sh" in combined
     assert "Open_Web0.sh" in combined
-    assert "https://github.com/Parad0x-Labs/openclaw-skills" in combined
+    assert "https://github.com/HumerLabs/openclaw-skills" in combined
     # No gateway, no registration, no third-party mutation anywhere in the stub bytes.
     body = stub.read_text(encoding="utf-8")
     for forbidden in (

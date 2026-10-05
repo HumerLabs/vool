@@ -126,10 +126,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Parad0x-Labs/vool"
-Repository = "https://github.com/Parad0x-Labs/vool"
-"Bug Tracker" = "https://github.com/Parad0x-Labs/vool/issues"
-"Brain Hive Watch" = "https://github.com/Parad0x-Labs/vool/blob/main/docs/BRAIN_HIVE_ARCHITECTURE.md"
+Homepage = "https://github.com/HumerLabs/vool"
+Repository = "https://github.com/HumerLabs/vool"
+"Bug Tracker" = "https://github.com/HumerLabs/vool/issues"
+"Brain Hive Watch" = "https://github.com/HumerLabs/vool/blob/main/docs/BRAIN_HIVE_ARCHITECTURE.md"
 
 [project.scripts]
 vool-agent = "apps.vool_agent:main"

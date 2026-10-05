@@ -67,7 +67,7 @@ in every case. Report what the tests establish and any limitations.
 ## Development setup
 
 ```bash
-git clone https://github.com/Parad0x-Labs/vool && cd vool
+git clone https://github.com/HumerLabs/vool && cd vool
 bash installer/bootstrap_vool.sh --install-profile local-only   # or use your own venv
 ```
 

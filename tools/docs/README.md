@@ -34,7 +34,7 @@ never publishes), or if the build/gate does not pass.
 ## Publishing — two documented options, both deliberate
 
 1. **Approved-branch automation (preferred once public).** Push `.gitbook.yaml` and `docs/` to
-   `Parad0x-Labs/vool` `main` (needs the owner's explicit approval). The server-side
+   `HumerLabs/vool` `main` (needs the owner's explicit approval). The server-side
    `vool-docs-sync` timer clones the repo, builds, runs the same gate, and atomically swaps the
    served release only if the gate passes. From then on, docs edits land by commit.
 2. **Manual release (while the repo is not yet public).** Follow website `HANDOVER.md` §5.9:

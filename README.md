@@ -7,7 +7,7 @@
 <p align="center"><strong>Your machine. Your models. An agent that gets things done.</strong></p>
 
 <p align="center">
-  <a href="https://github.com/Parad0x-Labs/vool/actions/workflows/ci.yml"><img src="https://github.com/Parad0x-Labs/vool/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/HumerLabs/vool/actions/workflows/ci.yml"><img src="https://github.com/HumerLabs/vool/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-eee8d5" alt="MIT license" /></a>
   <a href="pyproject.toml"><img src="https://img.shields.io/badge/version-0.6.0_beta-eee8d5" alt="Version 0.6.0 beta" /></a>
 </p>
@@ -49,14 +49,14 @@ Workspace scopes and operating modes control what the agent can do. Choose how e
 Download the bootstrap script, then run it:
 
 ```bash
-curl -fsSLo bootstrap_vool.sh https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.sh
+curl -fsSLo bootstrap_vool.sh https://raw.githubusercontent.com/HumerLabs/vool/main/installer/bootstrap_vool.sh
 bash bootstrap_vool.sh
 ```
 
 ### Windows PowerShell
 
 ```powershell
-Invoke-WebRequest https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1
+Invoke-WebRequest https://raw.githubusercontent.com/HumerLabs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1
 powershell -ExecutionPolicy Bypass -File .\bootstrap_vool.ps1
 ```
 
@@ -142,7 +142,7 @@ VOOL also includes optional wallet/payment integrations and bounded local helper
 | First session and model setup | [First run](docs/getting-started/first-run.md) · [Connect a model](docs/getting-started/connect-a-model.md) |
 | Workspace, memory, and control | [Workspaces](docs/concepts/workspaces.md) · [Memory](docs/concepts/memory.md) · [Spending limits](docs/guides/spending-limits.md) |
 | Development and contribution | [Repository map](docs/REPO_MAP.md) · [Contributing](CONTRIBUTING.md) |
-| Build status and troubleshooting | [CI](https://github.com/Parad0x-Labs/vool/actions/workflows/ci.yml) · [Engineering status](docs/STATUS.md) · [Error reference](docs/ERROR_BOOK.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) |
+| Build status and troubleshooting | [CI](https://github.com/HumerLabs/vool/actions/workflows/ci.yml) · [Engineering status](docs/STATUS.md) · [Error reference](docs/ERROR_BOOK.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) |
 | Security and licensing | [Security policy](SECURITY.md) · [MIT license](LICENSE) · [Third-party notices](third_party/NOTICES/README.md) |
 
 Built by **[Parad0x Labs](https://parad0xlabs.com)**. Contributor: **sls_0x**.

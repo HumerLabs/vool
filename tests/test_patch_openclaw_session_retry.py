@@ -37,7 +37,7 @@ def test_retirement_notice_names_native_startup_and_skills_repo(capsys) -> None:
     err = capsys.readouterr().err
     assert "retired" in err
     assert "Talk_To_VOOL" in err
-    assert "https://github.com/Parad0x-Labs/openclaw-skills" in err
+    assert "https://github.com/HumerLabs/openclaw-skills" in err
 
 
 def test_cli_main_exits_nonzero() -> None:

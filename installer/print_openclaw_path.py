@@ -15,7 +15,7 @@ RETIREMENT_NOTICE = (
     "OpenClaw integration is retired from VOOL. VOOL installs and starts natively "
     "(Start_VOOL / Talk_To_VOOL / Open_Web0) and does not read or write OpenClaw "
     "state. OpenClaw-specific skills live separately: "
-    "https://github.com/Parad0x-Labs/openclaw-skills"
+    "https://github.com/HumerLabs/openclaw-skills"
 )
 
 

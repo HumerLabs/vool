@@ -60,7 +60,7 @@ def test_retirement_notice_points_at_native_startup_and_skills_repo(capsys) -> N
     err = capsys.readouterr().err
     assert "retired" in err
     assert "Start_VOOL" in err
-    assert "https://github.com/Parad0x-Labs/openclaw-skills" in err
+    assert "https://github.com/HumerLabs/openclaw-skills" in err
 
 
 def test_cli_main_exits_nonzero_with_notice(capsys) -> None:

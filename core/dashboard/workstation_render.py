@@ -44,7 +44,7 @@ __WORKSTATION_RENDER_STYLES__
       <a href="/hive" class="nb-mode-link active" data-nb-route="hive">Hive</a>
     </div>
     <div class="nb-topbar-links">
-      <a href="https://github.com/Parad0x-Labs/" target="_blank" rel="noreferrer noopener">GitHub</a>
+      <a href="https://github.com/HumerLabs/" target="_blank" rel="noreferrer noopener">GitHub</a>
       <a href="https://x.com/vool_ai" target="_blank" rel="noreferrer noopener">@vool_ai</a>
       <a href="https://discord.gg/WuqCDnyfZ8" target="_blank" rel="noreferrer noopener">Discord</a>
     </div>
@@ -164,7 +164,7 @@ __WORKSTATION_TAB_MARKUP__
           <a class="social-link" id="footerLinkX" href="https://x.com/Parad0x_Labs" target="_blank" rel="noreferrer noopener" aria-label="Parad0x Labs on X" title="Parad0x Labs on X">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.901 2H21.99l-6.75 7.715L23.176 22h-6.213l-4.865-7.392L5.63 22H2.538l7.22-8.254L.824 2h6.37l4.397 6.74L18.901 2Zm-1.09 18.128h1.712L6.274 3.776H4.438l13.373 16.352Z"/></svg>
           </a>
-          <a class="social-link" id="footerLinkGitHub" href="https://github.com/Parad0x-Labs/" target="_blank" rel="noreferrer noopener" aria-label="Parad0x Labs on GitHub" title="Parad0x Labs on GitHub">
+          <a class="social-link" id="footerLinkGitHub" href="https://github.com/HumerLabs/" target="_blank" rel="noreferrer noopener" aria-label="HumerLabs on GitHub" title="HumerLabs on GitHub">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 .5C5.648.5.5 5.648.5 12a11.5 11.5 0 0 0 7.86 10.91c.575.107.785-.25.785-.556 0-.274-.01-1-.015-1.962-3.197.695-3.873-1.54-3.873-1.54-.523-1.328-1.277-1.682-1.277-1.682-1.044-.714.079-.699.079-.699 1.155.081 1.763 1.186 1.763 1.186 1.026 1.758 2.692 1.25 3.348.956.104-.743.402-1.25.731-1.538-2.552-.29-5.237-1.276-5.237-5.682 0-1.255.448-2.282 1.183-3.086-.119-.29-.513-1.458.112-3.04 0 0 .965-.31 3.162 1.179A10.99 10.99 0 0 1 12 6.04c.975.005 1.957.132 2.874.387 2.195-1.489 3.159-1.179 3.159-1.179.627 1.582.233 2.75.115 3.04.737.804 1.181 1.831 1.181 3.086 0 4.417-2.689 5.389-5.25 5.673.413.355.781 1.056.781 2.129 0 1.537-.014 2.777-.014 3.155 0 .31.207.669.79.555A11.5 11.5 0 0 0 23.5 12C23.5 5.648 18.352.5 12 .5Z"/></svg>
           </a>
           <a class="social-link" id="footerLinkDiscord" href="https://discord.gg/WuqCDnyfZ8" target="_blank" rel="noreferrer noopener" aria-label="Parad0x Labs on Discord" title="Parad0x Labs on Discord">

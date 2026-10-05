@@ -19,7 +19,7 @@ def _release(**overrides):
         "body": "- Added self-update\n- Fixed .null dead-end\n## Notes\n- Faster boot",
         "draft": False,
         "prerelease": False,
-        "html_url": "https://github.com/Parad0x-Labs/vool/releases/tag/v0.5.0",
+        "html_url": "https://github.com/HumerLabs/vool/releases/tag/v0.5.0",
         "assets": [
             {"name": "VOOL-Windows-0.5.0.zip", "browser_download_url": "https://x/VOOL-Windows-0.5.0.zip"},
             {"name": "VOOL-Windows-0.5.0.sha256", "browser_download_url": "https://x/VOOL-Windows-0.5.0.sha256"},

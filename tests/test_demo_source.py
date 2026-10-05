@@ -56,7 +56,7 @@ pip install cooltool
 @pytest.mark.parametrize(
     "url, expected",
     [
-        ("https://github.com/Parad0x-Labs/vool", ("Parad0x-Labs", "vool")),
+        ("https://github.com/HumerLabs/vool", ("HumerLabs", "vool")),
         ("github.com/o/r/tree/main", ("o", "r")),
         ("git@github.com:o/r.git", ("o", "r")),
         ("o/r", ("o", "r")),
@@ -105,7 +105,7 @@ def test_fetch_readme_uses_injected_fetcher() -> None:
 
 def test_brief_from_github_end_to_end() -> None:
     brief = brief_from_github(
-        "https://github.com/Parad0x-Labs/vool",
+        "https://github.com/HumerLabs/vool",
         fetcher=lambda _u: _README_FEATURES,
         presenter="woman",
         total_seconds=25,

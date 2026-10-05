@@ -7,9 +7,9 @@ If you discover a security vulnerability in VOOL, **do not open a public issue.*
 Instead, use one of these channels:
 
 1. **GitHub Security Advisories** (preferred):
-   https://github.com/Parad0x-Labs/vool/security/advisories/new
+   https://github.com/HumerLabs/vool/security/advisories/new
 
-2. **Email**: Reach out to the maintainers via the contact listed on the [Parad0x-Labs GitHub org](https://github.com/Parad0x-Labs).
+2. **Email**: Reach out to the maintainers via the contact listed on the [HumerLabs GitHub org](https://github.com/HumerLabs).
 
 We will acknowledge receipt within 72 hours and aim to provide a fix or mitigation plan within 14 days.
 

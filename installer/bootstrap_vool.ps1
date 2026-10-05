@@ -41,7 +41,7 @@ function Resolve-DefaultInstallDir {
     return $homeDefault
 }
 
-if ([string]::IsNullOrWhiteSpace($RepoOwner)) { $RepoOwner = "Parad0x-Labs" }
+if ([string]::IsNullOrWhiteSpace($RepoOwner)) { $RepoOwner = "HumerLabs" }
 if ([string]::IsNullOrWhiteSpace($RepoName)) { $RepoName = "vool" }
 if ([string]::IsNullOrWhiteSpace($Ref)) { $Ref = "main" }
 if ([string]::IsNullOrWhiteSpace($InstallDir)) { $InstallDir = Resolve-DefaultInstallDir }

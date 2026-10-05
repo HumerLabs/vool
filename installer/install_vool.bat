@@ -237,7 +237,7 @@ if "%LIQUEFY_DIR%"=="" (
     set "LIQUEFY_DIR=%PROJECT_ROOT%\..\liquefy-openclaw-integration"
     if not exist "%LIQUEFY_DIR%\pyproject.toml" (
       echo Cloning Liquefy into OpenClaw folder...
-      git clone --depth 1 https://github.com/Parad0x-Labs/liquefy-openclaw-integration.git "%LIQUEFY_DIR%" >nul 2>&1
+      git clone --depth 1 https://github.com/HumerLabs/liquefy-openclaw-integration.git "%LIQUEFY_DIR%" >nul 2>&1
     )
     if not exist "%LIQUEFY_DIR%\pyproject.toml" set "LIQUEFY_DIR="
   ) else (

@@ -9,7 +9,7 @@ def test_unfetched_url_with_review_intent_is_declined_not_hallucinated() -> None
     result = {"response": "The repo is OpenClaw, a local-first web framework. The quality is decent. Score: 4/10."}
     out = enforce_url_grounding(
         result,
-        user_input="https://github.com/Parad0x-Labs/openclaw-skills check this repo, tell me if any good, score 1/10",
+        user_input="https://github.com/HumerLabs/openclaw-skills check this repo, tell me if any good, score 1/10",
         fetch_attempts=0,
     )
     assert "did not open it on this turn" in out["response"]

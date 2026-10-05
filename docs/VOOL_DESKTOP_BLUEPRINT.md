@@ -314,7 +314,7 @@ From left to right:
 
 ### Example compact layout
 
-`VOOL Local / parad0x-labs/vool-local / main`
+`VOOL Local / humerlabs/vool-local / main`
 
 `Local Daily ▾`  `Build ▾`  `€0.00 today`  `Preview`  `Activity`  `⚙`
 

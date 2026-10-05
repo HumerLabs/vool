@@ -18,7 +18,7 @@ RETIREMENT_NOTICE = (
     "OpenClaw dashboard (or any third-party installed files). VOOL's own chat and "
     "session handling run natively through Start_VOOL / Talk_To_VOOL. "
     "OpenClaw-specific skills live separately: "
-    "https://github.com/Parad0x-Labs/openclaw-skills"
+    "https://github.com/HumerLabs/openclaw-skills"
 )
 
 

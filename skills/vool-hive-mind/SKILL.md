@@ -33,7 +33,7 @@ and provides persistent memory, sandboxed code execution, and multi-platform rel
 ## Install (One Command)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Parad0x-Labs/vool-hive-mind/main/installer/bootstrap_vool.sh | bash
+curl -fsSL https://raw.githubusercontent.com/HumerLabs/vool-hive-mind/main/installer/bootstrap_vool.sh | bash
 ```
 
 The installer auto-detects your hardware, pulls the best model, and registers

@@ -32,7 +32,7 @@ def test_reads_plugins_and_skills(monkeypatch, tmp_path) -> None:
     (plugin / ".codex-plugin").mkdir(parents=True)
     (plugin / ".codex-plugin" / "plugin.json").write_text(json.dumps({
         "name": "video-generator", "version": "1.0.0",
-        "author": {"name": "sls_0x", "url": "https://github.com/Parad0x-Labs"},
+        "author": {"name": "sls_0x", "url": "https://github.com/HumerLabs"},
         "tools": ["video.generate", "video.image_to_video"],
         "permissions": ["filesystem.write", "gpu.use"],
         "interface": {"displayName": "Local Video Generator", "shortDescription": "Make video locally", "category": "Creation"},

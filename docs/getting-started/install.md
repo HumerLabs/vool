@@ -5,7 +5,7 @@ description: How to install the VOOL AI assistant from source on macOS, Windows 
 # Install
 
 The release supported by this repository is **from source** with the bootstrap script;
-nothing is published on the [releases page](https://github.com/Parad0x-Labs/vool/releases)
+nothing is published on the [releases page](https://github.com/HumerLabs/vool/releases)
 beyond a private owner-review draft. A macOS disk image is separately downloadable from
 the project website, `vool.dev` — that channel is not built or verified from this
 repository's release records, so if you use it, verify its sidecar checksum first (see
@@ -31,12 +31,12 @@ Local models need considerably more memory than the app itself. Sizing guidance 
 Run the bootstrap script for your platform:
 
 ```bash
-curl -fsSLo bootstrap_vool.sh https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.sh
+curl -fsSLo bootstrap_vool.sh https://raw.githubusercontent.com/HumerLabs/vool/main/installer/bootstrap_vool.sh
 bash bootstrap_vool.sh
 ```
 
 ```powershell
-Invoke-WebRequest https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1
+Invoke-WebRequest https://raw.githubusercontent.com/HumerLabs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1
 powershell -ExecutionPolicy Bypass -File .\bootstrap_vool.ps1
 ```
 

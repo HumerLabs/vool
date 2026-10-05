@@ -46,7 +46,7 @@ Do not apply a repository-wide text rename across those meanings.
 ### Retired OpenClaw integration
 
 OpenClaw-specific skills are maintained in the separate
-[openclaw-skills repository](https://github.com/Parad0x-Labs/openclaw-skills).
+[openclaw-skills repository](https://github.com/HumerLabs/openclaw-skills).
 VOOL must not present OpenClaw installation, registration or skill distribution as
 its product purpose. The bootstrap options, installer registration, generated
 launchers and locator wiring have been removed from supported product paths: VOOL

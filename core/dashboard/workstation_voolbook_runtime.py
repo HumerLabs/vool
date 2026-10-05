@@ -204,7 +204,7 @@ WORKSTATION_VOOLBOOK_RUNTIME = '''
       </div>`;
 
       document.getElementById('nbOnboarding').innerHTML = `<div class="nb-onboard">
-        <div class="nb-onboard-step"><div class="nb-onboard-num">1</div><div class="nb-onboard-title">Run a Local Node</div><div class="nb-onboard-desc">Clone the repo and start a VOOL agent on your machine. One command gets you connected to the mesh.</div><a class="nb-onboard-link" href="https://github.com/Parad0x-Labs/Decentralized_VOOL" target="_blank" rel="noreferrer noopener">View on GitHub &rarr;</a></div>
+        <div class="nb-onboard-step"><div class="nb-onboard-num">1</div><div class="nb-onboard-title">Run a Local Node</div><div class="nb-onboard-desc">Clone the repo and start a VOOL agent on your machine. One command gets you connected to the mesh.</div><a class="nb-onboard-link" href="https://github.com/HumerLabs/Decentralized_VOOL" target="_blank" rel="noreferrer noopener">View on GitHub &rarr;</a></div>
         <div class="nb-onboard-step"><div class="nb-onboard-num">2</div><div class="nb-onboard-title">Generate Agent Identity</div><div class="nb-onboard-desc">Your agent gets a unique cryptographic identity. No central signup. Your keys, your agent.</div></div>
         <div class="nb-onboard-step"><div class="nb-onboard-num">3</div><div class="nb-onboard-title">Claim Ownership</div><div class="nb-onboard-desc">Link your agent to your operator identity. Prove you control the node without exposing secrets.</div></div>
         <div class="nb-onboard-step"><div class="nb-onboard-num">4</div><div class="nb-onboard-title">Publish Presence</div><div class="nb-onboard-desc">Your agent announces itself to the hive. Other peers discover your capabilities and region.</div></div>

@@ -183,7 +183,7 @@ def test_windows_launchers_use_module_entrypoint_for_api_server() -> None:
     assert "Start_VOOL.bat" in openclaw_launcher
     assert "Open_Chat.bat" in openclaw_launcher
     assert "Open_Web0.bat" in openclaw_launcher
-    assert "https://github.com/Parad0x-Labs/openclaw-skills" in openclaw_launcher
+    assert "https://github.com/HumerLabs/openclaw-skills" in openclaw_launcher
     assert "exit /b 1" in openclaw_launcher
     assert "Start_VOOL.bat" in background_cmd
     assert "vool_background.cmd" in install_bat_script

@@ -1162,7 +1162,7 @@ class VoolAPIServerModelMetadataTests(unittest.TestCase):
                         "ref": "main",
                         "commit": "1234567890abcdef1234567890abcdef12345678",
                         "dirty_state": True,
-                        "source_url": "https://github.com/Parad0x-Labs/vool-hive-mind/archive/refs/heads/main.tar.gz",
+                        "source_url": "https://github.com/HumerLabs/vool-hive-mind/archive/refs/heads/main.tar.gz",
                     }
                 ),
                 encoding="utf-8",
@@ -1193,7 +1193,7 @@ class VoolAPIServerModelMetadataTests(unittest.TestCase):
                         "ref": "codex/honest-ollama-prewarm-bootstrap",
                         "commit": "b7672501d12def8844d5d7f9c70bad87b005c28a",
                         "dirty_state": False,
-                        "source_url": "https://github.com/Parad0x-Labs/vool-hive-mind/archive/refs/heads/codex/honest-ollama-prewarm-bootstrap.tar.gz",
+                        "source_url": "https://github.com/HumerLabs/vool-hive-mind/archive/refs/heads/codex/honest-ollama-prewarm-bootstrap.tar.gz",
                     }
                 ),
                 encoding="utf-8",

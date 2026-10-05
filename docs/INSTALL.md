@@ -9,20 +9,20 @@ This is the canonical install and quickstart doc.
 macOS / Linux:
 
 ```bash
-curl -fsSLo bootstrap_vool.sh https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.sh
+curl -fsSLo bootstrap_vool.sh https://raw.githubusercontent.com/HumerLabs/vool/main/installer/bootstrap_vool.sh
 bash bootstrap_vool.sh
 ```
 
 If you need a reproducible historical install instead of the latest alpha trunk on `main`, pin an exact ref:
 
 ```bash
-tmp="$(mktemp)" && curl -fsSLo "$tmp" https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.sh && bash "$tmp" --ref 2f17895ede500d85372269cb516083abd09c013c --install-profile ollama-max && rm -f "$tmp"
+tmp="$(mktemp)" && curl -fsSLo "$tmp" https://raw.githubusercontent.com/HumerLabs/vool/main/installer/bootstrap_vool.sh && bash "$tmp" --ref 2f17895ede500d85372269cb516083abd09c013c --install-profile ollama-max && rm -f "$tmp"
 ```
 
 Windows PowerShell:
 
 ```powershell
-Invoke-WebRequest https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1; powershell -ExecutionPolicy Bypass -File .\bootstrap_vool.ps1
+Invoke-WebRequest https://raw.githubusercontent.com/HumerLabs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1; powershell -ExecutionPolicy Bypass -File .\bootstrap_vool.ps1
 ```
 
 Local Windows checkout with guided installer:
@@ -68,11 +68,11 @@ powershell -ExecutionPolicy Bypass -File .\bootstrap_vool.ps1 -InstallProfile lo
 Safe one-line profile shortcuts for macOS / Linux:
 
 ```bash
-tmp="$(mktemp)" && curl -fsSLo "$tmp" https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.sh && bash "$tmp" --install-profile ollama-only && rm -f "$tmp"
+tmp="$(mktemp)" && curl -fsSLo "$tmp" https://raw.githubusercontent.com/HumerLabs/vool/main/installer/bootstrap_vool.sh && bash "$tmp" --install-profile ollama-only && rm -f "$tmp"
 ```
 
 ```bash
-tmp="$(mktemp)" && curl -fsSLo "$tmp" https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.sh && bash "$tmp" --install-profile ollama-max && rm -f "$tmp"
+tmp="$(mktemp)" && curl -fsSLo "$tmp" https://raw.githubusercontent.com/HumerLabs/vool/main/installer/bootstrap_vool.sh && bash "$tmp" --install-profile ollama-max && rm -f "$tmp"
 ```
 
 After install, inspect or switch profiles without editing env vars:
@@ -99,7 +99,7 @@ The probe reports:
 Manual local shortcut:
 
 ```bash
-git clone https://github.com/Parad0x-Labs/vool.git
+git clone https://github.com/HumerLabs/vool.git
 cd vool-local
 bash Install_And_Run_VOOL.sh
 ```
@@ -131,7 +131,7 @@ If you already have a verified archive digest, pass it to the bootstrap script w
 ## Manual Developer Setup
 
 ```bash
-git clone https://github.com/Parad0x-Labs/vool.git
+git clone https://github.com/HumerLabs/vool.git
 cd vool-local
 python -m venv .venv
 source .venv/bin/activate
@@ -208,7 +208,7 @@ The convenience launchers (on macOS every `*.sh` launcher also gets a double-cli
 - Stop every VOOL process + disable auto-restart — macOS / Linux: `Stop_VOOL.sh` · Windows: `Stop_VOOL.bat`
 - Machine/provider probe — macOS / Linux: `Probe_VOOL_Stack.sh` · Windows: `Probe_VOOL_Stack.bat`
 
-The retired `OpenClaw_VOOL` launchers remain as side-effect-free stubs: they print where native startup lives, point OpenClaw-specific skills at the separate [openclaw-skills repository](https://github.com/Parad0x-Labs/openclaw-skills), and exit nonzero without starting or configuring OpenClaw. If you deliberately run VOOL from a custom runtime home, set `VOOL_HOME` before opening the launcher so the runtime points at the home you actually want.
+The retired `OpenClaw_VOOL` launchers remain as side-effect-free stubs: they print where native startup lives, point OpenClaw-specific skills at the separate [openclaw-skills repository](https://github.com/HumerLabs/openclaw-skills), and exit nonzero without starting or configuring OpenClaw. If you deliberately run VOOL from a custom runtime home, set `VOOL_HOME` before opening the launcher so the runtime points at the home you actually want.
 
 ## Stopping VOOL
 

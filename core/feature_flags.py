@@ -43,7 +43,7 @@ def get_feature_flags() -> list[FeatureFlag]:
             "OPENCLAW_INTEGRATION_READY",
             "retired",
             "OpenClaw integration is retired from VOOL product paths; VOOL installs, starts, and chats natively. "
-            "OpenClaw-specific skills live in the separate repository https://github.com/Parad0x-Labs/openclaw-skills. "
+            "OpenClaw-specific skills live in the separate repository https://github.com/HumerLabs/openclaw-skills. "
             "Unrelated OpenClaw installations are never read or modified by VOOL.",
         ),
     ]

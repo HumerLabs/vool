@@ -375,7 +375,7 @@ install_dependencies() {
   elif command -v git >/dev/null 2>&1; then
     liquefy_dir="${PROJECT_ROOT}/../liquefy-openclaw-integration"
     say "Cloning Liquefy into OpenClaw folder..."
-    git clone --depth 1 https://github.com/Parad0x-Labs/liquefy-openclaw-integration.git "${liquefy_dir}" 2>/dev/null || true
+    git clone --depth 1 https://github.com/HumerLabs/liquefy-openclaw-integration.git "${liquefy_dir}" 2>/dev/null || true
   else
     say "WARNING: git is not available and no bundled Liquefy payload was found. Continuing without Liquefy."
   fi
@@ -1162,7 +1162,7 @@ Start VOOL natively instead:
   Open_Web0.sh     open the local .null browser
 
 OpenClaw-specific skills are maintained separately:
-  https://github.com/Parad0x-Labs/openclaw-skills
+  https://github.com/HumerLabs/openclaw-skills
 NOTICE
 exit 1
 STUB

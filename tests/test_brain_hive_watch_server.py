@@ -644,7 +644,7 @@ class BrainHiveWatchServerTests(unittest.TestCase):
         self.assertIn('data-workstation-surface="brain-hive"', html)
         self.assertIn("https://x.com/Parad0x_Labs", html)
         self.assertIn("https://x.com/vool_ai", html)
-        self.assertIn("https://github.com/Parad0x-Labs/", html)
+        self.assertIn("https://github.com/HumerLabs/", html)
         self.assertIn("https://discord.gg/WuqCDnyfZ8", html)
         self.assertIn("https://pump.fun/coin/8EeDdvCRmFAzVD4takkBrNNwkeUTUQh4MscRK5Fzpump", html)
         self.assertNotIn("footerCopyToken", html)

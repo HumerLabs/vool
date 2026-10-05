@@ -11,7 +11,7 @@ in passing; when they disagree with this page, this page wins.
 
 VOOL is in **beta**. The release supported by this repository is **from source** — see
 [Install](../getting-started/install.md). Nothing is published on the
-[releases page](https://github.com/Parad0x-Labs/vool/releases): the only GitHub release is
+[releases page](https://github.com/HumerLabs/vool/releases): the only GitHub release is
 a **private draft** (`0.6.0-beta-migrated-20260919`) for owner review.
 
 Two distinct macOS artifacts exist across the verified channels (checked 2026-09-28):

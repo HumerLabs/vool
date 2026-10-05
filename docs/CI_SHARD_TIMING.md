@@ -16,7 +16,7 @@ instruments:
 The Linux matrix partitions ~2,300 collected test files (≈36k tests) across 10
 shards. Before activation it partitioned by **descending file size,
 round-robin** — file size is a weak proxy for duration. The green run
-[35815768194](https://github.com/Parad0x-Labs/vool/actions/runs/35815768194)
+[35815768194](https://github.com/HumerLabs/vool/actions/runs/35815768194)
 at `a0a160a` measured that partition:
 
 | shard minutes (10 Linux shards) | total raw runner-minutes |
@@ -166,10 +166,10 @@ and whose verify job uploaded the canonical manifest):
 
 ```
 # 1. Fetch the run's artifacts (needs read access; CI itself never does this):
-gh run download <run-id> --repo Parad0x-Labs/vool \
+gh run download <run-id> --repo HumerLabs/vool \
   --name verification-logs-verify --dir evidence/verify
 for n in 0 1 2 3 4 5 6 7 8 9; do
-  gh run download <run-id> --repo Parad0x-Labs/vool \
+  gh run download <run-id> --repo HumerLabs/vool \
     --name verification-logs-shard-$n --dir evidence/shard-$n
 done
 

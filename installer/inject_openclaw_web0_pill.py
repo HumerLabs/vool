@@ -17,7 +17,7 @@ RETIREMENT_NOTICE = (
     "OpenClaw Control UI (or any third-party installed files). The native web UI "
     "is served by VOOL itself at http://127.0.0.1:11435/web0 (Open_Web0 launcher). "
     "OpenClaw-specific skills live separately: "
-    "https://github.com/Parad0x-Labs/openclaw-skills"
+    "https://github.com/HumerLabs/openclaw-skills"
 )
 
 

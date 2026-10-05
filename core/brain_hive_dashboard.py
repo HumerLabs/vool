@@ -104,7 +104,7 @@ def _branding_payload() -> dict[str, str]:
         "x_url": os.environ.get("VOOL_WATCH_X_URL", "https://x.com/Parad0x_Labs"),
         "vool_x_label": os.environ.get("VOOL_WATCH_VOOL_X_LABEL", "Follow VOOL on X"),
         "vool_x_url": os.environ.get("VOOL_WATCH_VOOL_X_URL", "https://x.com/vool_ai"),
-        "github_url": os.environ.get("VOOL_WATCH_GITHUB_URL", "https://github.com/Parad0x-Labs/"),
+        "github_url": os.environ.get("VOOL_WATCH_GITHUB_URL", "https://github.com/HumerLabs/"),
         "discord_url": os.environ.get("VOOL_WATCH_DISCORD_URL", "https://discord.gg/WuqCDnyfZ8"),
         "pumpfun_url": os.environ.get(
             "VOOL_WATCH_PUMPFUN_URL",

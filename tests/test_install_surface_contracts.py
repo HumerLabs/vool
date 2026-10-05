@@ -175,9 +175,9 @@ def test_bootstrap_scripts_support_checksum_verification_and_docs_do_not_pipe_re
     assert "| bash" not in install_doc
     assert "| iex" not in install_doc
     assert "curl -fsSLo bootstrap_vool.sh" in readme
-    assert "Invoke-WebRequest https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1" in readme
+    assert "Invoke-WebRequest https://raw.githubusercontent.com/HumerLabs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1" in readme
     assert "curl -fsSLo bootstrap_vool.sh" in install_doc
-    assert "Invoke-WebRequest https://raw.githubusercontent.com/Parad0x-Labs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1" in install_doc
+    assert "Invoke-WebRequest https://raw.githubusercontent.com/HumerLabs/vool/main/installer/bootstrap_vool.ps1 -OutFile bootstrap_vool.ps1" in install_doc
 
 
 def test_install_profile_selection_is_available_across_bootstrap_and_installer_surfaces() -> None:
@@ -252,7 +252,7 @@ def test_windows_retired_openclaw_launcher_is_a_side_effect_free_stub() -> None:
     assert "Open_Chat.bat" in launcher
     assert "Talk_To_VOOL.bat" in launcher
     assert "Open_Web0.bat" in launcher
-    assert "https://github.com/Parad0x-Labs/openclaw-skills" in launcher
+    assert "https://github.com/HumerLabs/openclaw-skills" in launcher
     assert "exit /b 1" in launcher
     # No third-party discovery, registration, UI patching, or gateway startup remains.
     assert "where openclaw" not in launcher

@@ -1360,7 +1360,7 @@ def main():
                     help="URL path the docs are served under ('' for a subdomain root)")
     ap.add_argument("--site-url", default="https://vool.dev")
     ap.add_argument("--edit-base", default="",
-                    help="e.g. https://github.com/Parad0x-Labs/vool/edit/main/docs/")
+                    help="e.g. https://github.com/HumerLabs/vool/edit/main/docs/")
     a = ap.parse_args()
     return build(os.path.abspath(a.src), os.path.abspath(a.out),
                  a.base.rstrip("/"), a.site_url, a.edit_base)

@@ -15,7 +15,7 @@ _README = (
 def test_demo_plan_handler_happy(monkeypatch) -> None:
     monkeypatch.setattr(policy_engine, "allow_web_fallback", lambda: True)
     monkeypatch.setattr(demo_source, "fetch_readme", lambda o, r, fetcher=None: _README)
-    res = _demo_plan({"url": "github.com/Parad0x-Labs/vool", "presenter": "woman", "seconds": 20})
+    res = _demo_plan({"url": "github.com/HumerLabs/vool", "presenter": "woman", "seconds": 20})
     assert res.ok and res.status == "ok"
     assert "Demo video plan" in res.response_text
     assert res.details["plan"]["product"] == "VOOL"

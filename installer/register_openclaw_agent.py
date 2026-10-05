@@ -18,7 +18,7 @@ RETIREMENT_NOTICE = (
     "natively (Start_VOOL / Talk_To_VOOL / Open_Web0) and never registers an agent "
     "in, or writes config for, a third-party OpenClaw installation. Existing "
     "OpenClaw installations are left untouched. OpenClaw-specific skills live "
-    "separately: https://github.com/Parad0x-Labs/openclaw-skills"
+    "separately: https://github.com/HumerLabs/openclaw-skills"
 )
 
 

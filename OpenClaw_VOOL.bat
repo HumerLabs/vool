@@ -12,6 +12,6 @@ echo   Talk_To_VOOL.bat  terminal chat
 echo   Open_Web0.bat     open the local web UI in your browser
 echo.
 echo OpenClaw-specific skills are maintained separately:
-echo   https://github.com/Parad0x-Labs/openclaw-skills
+echo   https://github.com/HumerLabs/openclaw-skills
 echo.
 exit /b 1

@@ -4211,7 +4211,7 @@ class OpenClawToolingContextTests(unittest.TestCase):
             subprocess.run(["git", "init", "-b", "main"], cwd=repo, check=True, capture_output=True, text=True)
             subprocess.run(["git", "config", "user.name", "sls_0x"], cwd=repo, check=True, capture_output=True, text=True)
             subprocess.run(
-                ["git", "config", "user.email", "240776969+Parad0x-Labs@users.noreply.github.com"],
+                ["git", "config", "user.email", "240776969+HumerLabs@users.noreply.github.com"],
                 cwd=repo,
                 check=True,
                 capture_output=True,

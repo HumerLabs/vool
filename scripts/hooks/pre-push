@@ -1,9 +1,9 @@
 #!/bin/sh
 # NULLA public-push ACCIDENT GUARD. Installed to .git/hooks/pre-push via scripts/install-hooks.
 #
-# Blocks ordinary pushes to the PUBLIC repo (Parad0x-Labs/nulla-local). Only
+# Blocks ordinary pushes to the PUBLIC repo (HumerLabs/nulla-local). Only
 # scripts/nulla-public-release may push there (it sets NULLA_PUBLIC_RELEASE=1 after a GO approval).
-# Private pushes (Parad0x-Labs/nulla-local-product) are allowed. Fails CLOSED on an unknown remote.
+# Private pushes (HumerLabs/nulla-local-product) are allowed. Fails CLOSED on an unknown remote.
 #
 # NOTE: a local hook is bypassable (--no-verify / another clone). GitHub branch protection on public
 # main is the authoritative backstop (NULLA-DELIVERY/BRANCH_PROTECTION.md).
@@ -17,9 +17,9 @@ fi
 norm=$(printf '%s' "$remote_url" | tr 'A-Z' 'a-z')
 
 case "$norm" in
-  *parad0x-labs/nulla-local-product*)
+  *humerlabs/nulla-local-product*)
     exit 0 ;;                                   # private product repo -- allowed
-  *parad0x-labs/nulla-local.git|*parad0x-labs/nulla-local|*parad0x-labs/nulla-local/*)
+  *humerlabs/nulla-local.git|*humerlabs/nulla-local|*humerlabs/nulla-local/*)
     if [ "$NULLA_PUBLIC_RELEASE" = "1" ] && [ -f "NULLA-DELIVERY/GO_APPROVAL.json" ]; then
       exit 0                                    # authorized public release path
     fi

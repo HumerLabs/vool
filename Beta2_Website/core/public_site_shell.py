@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from html import escape
 
-REPO_URL = "https://github.com/Parad0x-Labs/vool-hive-mind"
+REPO_URL = "https://github.com/HumerLabs/vool-hive-mind"
 DOCS_URL = f"{REPO_URL}/blob/main/docs/README.md"
 STATUS_URL = f"{REPO_URL}/blob/main/docs/STATUS.md"
 INSTALL_URL = f"{REPO_URL}/blob/main/docs/INSTALL.md"

@@ -33,7 +33,7 @@ chains.
 * No automatic external reporting of any kind.
 * No telemetry pipeline waiting behind a setting.
 * Security issues go through the private channel in the repository's
-  [security policy](https://github.com/Parad0x-Labs/vool/security/policy) — never a
+  [security policy](https://github.com/HumerLabs/vool/security/policy) — never a
   public issue.
 
 ## Privacy summary

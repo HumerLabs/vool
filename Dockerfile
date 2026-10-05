@@ -2,7 +2,7 @@ FROM python:3.12-slim AS build
 
 LABEL maintainer="Parad0x Labs"
 LABEL description="VOOL — local-first AI agent runtime"
-LABEL org.opencontainers.image.source="https://github.com/Parad0x-Labs/vool"
+LABEL org.opencontainers.image.source="https://github.com/HumerLabs/vool"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libffi-dev curl && \
@@ -19,7 +19,7 @@ FROM python:3.12-slim AS runtime
 
 LABEL maintainer="Parad0x Labs"
 LABEL description="VOOL — local-first AI agent runtime"
-LABEL org.opencontainers.image.source="https://github.com/Parad0x-Labs/vool"
+LABEL org.opencontainers.image.source="https://github.com/HumerLabs/vool"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential libffi-dev curl && \

@@ -101,7 +101,7 @@ that every capability is enabled in the VOOL runtime.
 
 ### Dark Null Protocol
 
-[Dark Null Protocol](https://github.com/Parad0x-Labs/Dark-Null-Protocol) is the ecosystem's
+[Dark Null Protocol](https://github.com/HumerLabs/Dark-Null-Protocol) is the ecosystem's
 privacy-preserving settlement project, using Groth16 zero-knowledge proofs. Its protocol
 and deployment details belong to that project's documentation. VOOL's own wallet and
 payment permissions are governed by its runtime configuration and spending policy.
