@@ -144,5 +144,4 @@ VOOL also includes optional wallet/payment integrations and bounded local helper
 | Development and contribution | [Repository map](docs/REPO_MAP.md) · [Contributing](CONTRIBUTING.md) |
 | Build status and troubleshooting | [CI](https://github.com/HumerLabs/vool/actions/workflows/ci.yml) · [Engineering status](docs/STATUS.md) · [Error reference](docs/ERROR_BOOK.md) · [Troubleshooting](docs/TROUBLESHOOTING.md) |
 | Security and licensing | [Security policy](SECURITY.md) · [MIT license](LICENSE) · [Third-party notices](third_party/NOTICES/README.md) |
-
-Built by **[Parad0x Labs](https://parad0xlabs.com)**. Contributor: **sls_0x**.
+ 
